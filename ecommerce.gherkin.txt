@@ -13,3 +13,28 @@ Feature: ecommerce
     Given un acquisto di 3 euro
     When un cliente conclude un acquisto fn:calcola_punti_fedelta ne calcola i punti fedeltà
     Then il cliente riceve 0 punti fedeltà perchè l'acquisto è inferiore a 10 euro
+
+  # 1 Calcolo spedizione
+  Scenario: test_calcola_spedizione_se_cliente_non_decide_fra_spedizione_espressa_o_ordinaria
+    Given un acquisto di 15 kg da consegnare ad una distanza di 50km
+    When un cliente calcola nel totale dell'ordine, il costo di spedizione fn:calcola_costo_spedizione con parametri peso in kg, distanza e espresso (optional impostato a false)
+    Then il calcolo della spedizione deve essere l'arrotondamento di 3 + 15 * 0.5 + 25 * 0.02 senza il * 2 dell'espresso
+
+  # 2 Calcolo dello sconto
+    Scenario: test_calcola_sconto_valore_oltre_cento
+    Given un articolo da 200€ e un buono sconto da 500%
+    When un cliente calcola lo sconto sull'articolo fn:calcola_prezzo_scontato calcolarne lo sconto passandogli prima il prezzo dell'articolo
+    Then ne deve uscire un ValueError dato che lo sconto è superiore al 100%
+
+  # 3 Riepilogo cliente
+    Scenario: test_riepilogo_cliente_saldo_negativo
+    Given un cliente che ha speso -5€ in negozio
+    When il cliente chiede il riepilogo fn:riepilogo_cliente
+    Then si solleva un ValueError per saldo negativo
+
+  # 4 Riepilogo cliente buono
+    Scenario: test_riepilogo_cliente_saldo_positivo
+    Given un cliente che ha speso 1752.25€ in negozio
+    When il cliente chiede il riepilogo fn:riepilogo_cliente
+    Then si riceve un oggetto con il totale_speso cioè 1752.25, i punti che sono per ogni 10 euro spesi quindi 175, e il livello "silver" dato che è nella fascia tra i 100 e i 499
+
