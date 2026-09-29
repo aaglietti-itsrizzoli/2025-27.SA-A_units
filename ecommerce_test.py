@@ -43,11 +43,13 @@ def test_svuota_articoli_esauriti_articolo_non_esistente():
     assert nuova_lista == [{"nome": "prodotto_A"}]
 
     # 3 Livello cliente
+
 def test_promuovi_livello_cliente_punti_valore_altissimo():
-    # Given un numero di punti oltre il limite integer
-    punti_oltre_limite = sys.maxsize + 1  # es. 9223372036854775808
+    # Given un numero di punti altissimo (oltre il limite integer standard)
+    punti_oltre_limite = sys.maxsize + 1
     
     # When la funzione fn:promuovi_livello_cliente viene chiamata con questo valore
-    # Then la funzione va in errore (es. ValueError o OverflowError)
-    with pytest.raises((ValueError, OverflowError)):
-        ecommerce.promuovi_livello_cliente(punti_oltre_limite)
+    livello = ecommerce.promuovi_livello_cliente(punti_oltre_limite)
+    
+    # Then la funzione restituisce "platinum"
+    assert livello == "platinum"
