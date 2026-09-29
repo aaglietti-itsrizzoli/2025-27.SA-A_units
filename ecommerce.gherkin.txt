@@ -5,11 +5,65 @@
 # When descrive quali fn: del modulo da testare
 # Then contiene la descrizione delle asserzioni da svolgere
 
-
 Feature: ecommerce
 
-  # 0 Punti fedeltà
-  Scenario: test_calcola_punti_fedelta_zero_punti_per_dieci_euro_acquisto
-    Given un acquisto di 3 euro
-    When un cliente conclude un acquisto fn:calcola_punti_fedelta ne calcola i punti fedeltà
-    Then il cliente riceve 0 punti fedeltà perchè l'acquisto è inferiore a 10 euro
+  # Catalogo e Prezzi
+  Scenario: test_calcola_prezzo_scontato_valido
+    Given un prezzo di 100.00 EUR e uno sconto del 20%
+    When si invoca fn:calcola_prezzo_scontato
+    Then il prezzo finale è 80.00 EUR
+
+  Scenario: test_calcola_prezzo_scontato_prezzo_negativo_errore
+    Given un prezzo di -10.00 EUR e uno sconto del 10%
+    When si invoca fn:calcola_prezzo_scontato
+    Then viene sollevato un ValueError
+
+  Scenario: test_applica_codice_sconto
+    Given un prezzo di 50.00 EUR e una tabella codici {"PROMO10": 10}
+    When si applica il codice con fn:applica_codice_sconto
+    Then con "PROMO10" il prezzo è 45.00 EUR e con un codice inesistente rimane 50.00 EUR
+
+  Scenario: test_calcola_iva
+    Given un prezzo netto di 100.00 EUR
+    When si invoca fn:calcola_iva con aliquota 22
+    Then il prezzo lordo restituito è 122.00 EUR
+
+  # Carrello e Ordini
+  Scenario: test_crea_riga_carrello_valida_e_quantita_invalida
+    Given il prodotto "Mouse" con prezzo 20.00 EUR e quantità 2
+    When si invoca fn:crea_riga_carrello
+    Then la riga creata ha subtotale 40.00 EUR
+    And quantità <= 0 solleva un ValueError
+
+  Scenario: test_svuota_articoli_esauriti
+    Given una lista di righe carrello e un magazzino
+    When si invoca fn:svuota_articoli_esauriti
+    Then le righe dei prodotti esauriti vengono rimosse
+
+  Scenario: test_calcola_totale_ordine
+    Given carrello, magazzino, codice sconto e aliquota IVA
+    When si invoca fn:calcola_totale_ordine
+    Then viene restituito un dizionario con righe_valide, totale_netto e totale_lordo
+
+  # Spedizione
+  Scenario: test_calcola_costo_spedizione
+    Given peso 10 kg e distanza 100 km
+    When si invoca fn:calcola_costo_spedizione
+    Then il costo normale è 10.00 EUR e quello espresso è 20.00 EUR
+    And un peso > 30 kg solleva un ValueError
+
+  Scenario: test_stima_data_consegna
+    Given un giorno dell'ordine e giorni lavorativi 2
+    When si invoca fn:stima_data_consegna
+    Then la data risultante salta il fine settimana
+
+  # Fedeltà
+  Scenario: test_calcola_punti_fedelta
+    Given un totale speso di 25.00 EUR
+    When si invoca fn:calcola_punti_fedelta
+    Then il punteggio restituito è 2 punti
+
+  Scenario: test_promuovi_livello_cliente
+    Given vari punteggi di punti totali
+    When si invoca fn:promuovi_livello_cliente
+    Then restituisce il livello corrispondente ("bronze", "silver", "gold", "platinum")
