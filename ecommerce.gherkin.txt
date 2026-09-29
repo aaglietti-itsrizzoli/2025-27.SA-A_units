@@ -13,3 +13,10 @@ Feature: ecommerce
     Given un acquisto di 3 euro
     When un cliente conclude un acquisto fn:calcola_punti_fedelta ne calcola i punti fedeltà
     Then il cliente riceve 0 punti fedeltà perchè l'acquisto è inferiore a 10 euro
+  
+    # 1 Calcola totale carrello
+  Scenario: test_calcola_totale_carrello_per_20_oggetti
+    Given 20 oggetti(ogni oggetto ha un nome_prodotto, prezzo_unitario, quantita)
+    When un cliente aggiunge un oggetto fn:crea_riga_carrello crea un oggetto nel carrello
+    When un ogetto viene aggiunto un fn:calcola_totale_carrello ne calcola il totale
+    Then il cliente riceve il totale del costo del carrello
