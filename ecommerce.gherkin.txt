@@ -5,11 +5,128 @@
 # When descrive quali fn: del modulo da testare
 # Then contiene la descrizione delle asserzioni da svolgere
 
-
 Feature: ecommerce
 
-  # 0 Punti fedeltà
+  # --- Catalogo e Prezzi ---
+  Scenario: test_calcola_prezzo_scontato_valido
+    Given un prezzo di 100.0 e uno sconto del 20%
+    When viene eseguita la fn:calcola_prezzo_scontato
+    Then il risultato deve essere 80.0
+
+  Scenario: test_calcola_prezzo_scontato_arrotondamento
+    Given un prezzo di 10.55 e uno sconto del 15%
+    When viene eseguita la fn:calcola_prezzo_scontato
+    Then il risultato arrotondato deve essere 8.97
+
+  Scenario: test_calcola_prezzo_scontato_eccezioni
+    Given un prezzo negativo o una percentuale non compresa tra 0 e 100
+    When viene eseguita la fn:calcola_prezzo_scontato
+    Then viene sollevata un'eccezione ValueError
+
+  Scenario: test_applica_codice_sconto_esistente
+    Given una tabella codici e un codice valido "ESTATE10"
+    When viene eseguita la fn:applica_codice_sconto
+    Then il prezzo viene scontato del 10%
+
+  Scenario: test_applica_codice_sconto_inesistente
+    Given una tabella codici e un codice inesistente
+    When viene eseguita la fn:applica_codice_sconto
+    Then il prezzo rimane invariato
+
+  Scenario: test_calcola_iva_default_e_custom
+    Given un prezzo netto di 100 euro
+    When viene eseguita la fn:calcola_iva con aliquota di default (22%) o custom (10%)
+    Then il prezzo lordo calcolato è 122.0 o 110.0 euro
+
+  Scenario: test_calcola_iva_eccezioni
+    Given un prezzo netto negativo o un'aliquota negativa
+    When viene eseguita la fn:calcola_iva
+    Then viene sollevata un'eccezione ValueError
+
+  # --- Carrello ---
+  Scenario: test_crea_riga_carrello_valida
+    Given nome prodotto "T-Shirt", prezzo 19.99 e quantità 2
+    When viene eseguita la fn:crea_riga_carrello
+    Then restituisce un dizionario riga con subtotale 39.98
+
+  Scenario: test_crea_riga_carrello_eccezioni
+    Given quantità minore/uguale a 0 o prezzo unitario negativo
+    When viene eseguita la fn:crea_riga_carrello
+    Then viene sollevata un'eccezione ValueError
+
+  Scenario: test_calcola_totale_carrello
+    Given una lista di righe carrello con subtotali validi
+    When viene eseguita la fn:calcola_totale_carrello
+    Then restituisce la somma dei subtotali
+
+  Scenario: test_calcola_totale_carrello_vuoto
+    Given un carrello vuoto
+    When viene eseguita la fn:calcola_totale_carrello
+    Then il totale restituito è 0.0
+
+  Scenario: test_svuota_articoli_esauriti
+    Given un carrello con articoli presenti e non presenti in magazzino
+    When viene eseguita la fn:svuota_articoli_esauriti
+    Then restituisce una nuova lista contenente solo gli articoli con disponibilità > 0
+
+  Scenario: test_calcola_totale_ordine
+    Given carrello, magazzino, codice sconto e aliquota IVA
+    When viene eseguita la fn:calcola_totale_ordine
+    Then calcola righe valide, totale netto e totale lordo finale
+
+  # --- Spedizione ---
+  Scenario: test_calcola_costo_spedizione_standard_e_espressa
+    Given peso in kg, distanza in km e flag spedizione espressa
+    When viene eseguita la fn:calcola_costo_spedizione
+    Then restituisce il costo di spedizione calcolato
+
+  Scenario: test_calcola_costo_spedizione_eccezioni
+    Given peso/distanza negativi o peso superiore a 30 kg
+    When viene eseguita la fn:calcola_costo_spedizione
+    Then viene sollevata un'eccezione ValueError
+
+  Scenario: test_stima_data_consegna_senza_weekend
+    Given una data di ordine e giorni lavorativi che non incrociano il weekend
+    When viene eseguita la fn:stima_data_consegna
+    Then restituisce la data di consegna prevista
+
+  Scenario: test_stima_data_consegna_con_weekend
+    Given una data di ordine e giorni lavorativi che scavalcano il weekend
+    When viene eseguita la fn:stima_data_consegna
+    Then restituisce la data di consegna slittando i giorni di sabato e domenica
+
+  Scenario: test_stima_data_consegna_eccezione
+    Given giorni lavorativi negativi
+    When viene eseguita la fn:stima_data_consegna
+    Then viene sollevata un'eccezione ValueError
+
+  # --- Fedeltà Cliente ---
   Scenario: test_calcola_punti_fedelta_zero_punti_per_dieci_euro_acquisto
     Given un acquisto di 3 euro
     When un cliente conclude un acquisto fn:calcola_punti_fedelta ne calcola i punti fedeltà
     Then il cliente riceve 0 punti fedeltà perchè l'acquisto è inferiore a 10 euro
+
+  Scenario: test_calcola_punti_fedelta_con_moltiplicatore
+    Given un totale speso di 25 euro e un moltiplicatore pari a 3
+    When viene eseguita la fn:calcola_punti_fedelta
+    Then restituisce 6 punti fedeltà
+
+  Scenario: test_calcola_punti_fedelta_eccezioni
+    Given totale speso negativo o moltiplicatore <= 0
+    When viene eseguita la fn:calcola_punti_fedelta
+    Then viene sollevata un'eccezione ValueError
+
+  Scenario: test_promuovi_livello_cliente
+    Given un ammontare di punti totali
+    When viene eseguita la fn:promuovi_livello_cliente
+    Then restituisce il livello corrispondente ("bronze", "silver", "gold", "platinum")
+
+  Scenario: test_promuovi_livello_cliente_eccezione
+    Given punti totali negativi
+    When viene eseguita la fn:promuovi_livello_cliente
+    Then viene sollevata un'eccezione ValueError
+
+  Scenario: test_riepilogo_cliente
+    Given totale speso storico e moltiplicatore
+    When viene eseguita la fn:riepilogo_cliente
+    Then restituisce il dizionario con spesa, punti e livello assegnato
