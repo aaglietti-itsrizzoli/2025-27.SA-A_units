@@ -1,304 +1,182 @@
+from datetime import date
 import pytest
-from ecommerce import (
-    calcola_punti_fedelta,
-    calcola_prezzo_scontato,
-    applica_codice_sconto,
-    calcola_iva,
-    crea_riga_carrello,
-    svuota_articoli_esauriti,
-)
+import ecommerce
 
 
-# 0 Punti fedeltà
-def test_calcola_punti_fedelta_zero_punti_per_dieci_euro_acquisto():
-    assert calcola_punti_fedelta(3) == 0
+# ---------------------------------------------------------------------------
+# Test Catalogo e Prezzi
+# ---------------------------------------------------------------------------
+
+def test_calcola_prezzo_scontato_valido():
+    assert ecommerce.calcola_prezzo_scontato(100.0, 20) == 80.0
+    assert ecommerce.calcola_prezzo_scontato(0, 50) == 0.0
 
 
-# 1 Sconto su prezzo
-def test_calcolo_prezzo_scontato_sopra_100():
-    with pytest.raises(
-        ValueError, match="la percentuale di sconto deve essere tra 0 e 100"
-    ):
-        calcola_prezzo_scontato(80, 1000)
-
-
-def test_calcolo_prezzo_scontato_prezzo_negativo():
+def test_calcola_prezzo_scontato_errori():
     with pytest.raises(ValueError, match="il prezzo non può essere negativo"):
-        calcola_prezzo_scontato(-80, 10)
+        ecommerce.calcola_prezzo_scontato(-10.0, 20)
+
+    with pytest.raises(ValueError, match="la percentuale di sconto deve essere tra 0 e 100"):
+        ecommerce.calcola_prezzo_scontato(100.0, -5)
+
+    with pytest.raises(ValueError, match="la percentuale di sconto deve essere tra 0 e 100"):
+        ecommerce.calcola_prezzo_scontato(100.0, 105)
 
 
-def test_applica_codice_sconto_non_trovato():
-    prezzo = 120
-    chiave = 10
-    dizionario = {1: 10, 2: 15}
-    assert applica_codice_sconto(prezzo, chiave, dizionario) == 120
+def test_applica_codice_sconto():
+    tabella = {"SUMMER10": 10, "WELCOME20": 20}
+    assert ecommerce.applica_codice_sconto(100.0, "SUMMER10", tabella) == 90.0
+    assert ecommerce.applica_codice_sconto(100.0, "CODICE_ERRATO", tabella) == 100.0
 
 
-# 3 Calcolo di IVA su prezzo
-def test_calcola_iva_prezzo_negativo():
-    with pytest.raises(
-        ValueError, match="il prezzo netto non può essere negativo"
-    ):
-        calcola_iva(-50, 20)
+def test_calcola_iva():
+    assert ecommerce.calcola_iva(100.0) == 122.0
+    assert ecommerce.calcola_iva(100.0, aliquota=10) == 110.0
 
 
-def test_calcola_iva_aliquota_negativa():
+def test_calcola_iva_errori():
+    with pytest.raises(ValueError, match="il prezzo netto non può essere negativo"):
+        ecommerce.calcola_iva(-50.0)
+
     with pytest.raises(ValueError, match="l'aliquota non può essere negativa"):
-        calcola_iva(50, -20)
+        ecommerce.calcola_iva(100.0, aliquota=-10)
 
 
-# 4 Modifiche delle righe del carrello
-def test_crea_riga_carrello_prezzo_non_valido():
-    with pytest.raises(
-        ValueError, match="il prezzo unitario non può essere negativo"
-    ):
-        crea_riga_carrello("Cola", -1, 300)
+# ---------------------------------------------------------------------------
+# Test Carrello e Ordini
+# ---------------------------------------------------------------------------
+
+def test_crea_riga_carrello_valida():
+    riga = ecommerce.crea_riga_carrello("Tastiera", 50.0, 2)
+    assert riga == {
+        "nome": "Tastiera",
+        "prezzo_unitario": 50.0,
+        "quantita": 2,
+        "subtotale": 100.0,
+    }
 
 
-def test_crea_riga_carrello_quantita_non_valida():
-    with pytest.raises(
-        ValueError, match="la quantità deve essere maggiore di zero"
-    ):
-        crea_riga_carrello("Cola", 10, -1)
+def test_crea_riga_carrello_errori():
+    with pytest.raises(ValueError, match="la quantità deve essere maggiore di zero"):
+        ecommerce.crea_riga_carrello("Tastiera", 50.0, 0)
+
+    with pytest.raises(ValueError, match="la quantità deve essere maggiore di zero"):
+        ecommerce.crea_riga_carrello("Tastiera", 50.0, -1)
+
+    with pytest.raises(ValueError, match="il prezzo unitario non può essere negativo"):
+        ecommerce.crea_riga_carrello("Tastiera", -10.0, 1)
 
 
-def test_svuota_articoli_esauriti_articoli_presenti():
-    prezzo_unitario = 30
-    quantita = 2
-    righe_carrello = [
-        {
-            "nome": "Sushi",
-            "prezzo_unitario": prezzo_unitario,
-            "quantita": quantita,
-            "subtotale": round(prezzo_unitario * quantita, 2),
-        }
+def test_calcola_totale_carrello():
+    righe = [
+        {"subtotale": 10.0},
+        {"subtotale": 25.5},
     ]
-    magazzino = {"Sushi": 5}
-
-    risultato = svuota_articoli_esauriti(righe_carrello, magazzino)
-    assert risultato == righe_carrello
+    assert ecommerce.calcola_totale_carrello(righe) == 35.5
+    assert ecommerce.calcola_totale_carrello([]) == 0.0
 
 
-def test_svuota_articoli_esauriti_articoli_non_sufficenti():
-    prezzo_unitario = 30
-    quantita = 2
-    righe_carrello = [
-        {
-            "nome": "Sushi",
-            "prezzo_unitario": prezzo_unitario,
-            "quantita": quantita,
-            "subtotale": round(prezzo_unitario * quantita, 2),
-        }
-    ]
-    magazzino = {"Sushi": 0}
-
-    risultato = svuota_articoli_esauriti(righe_carrello, magazzino)
-    assert risultato == []
-
-# 0 Punti fedeltà
-def test_calcola_punti_fedelta_zero_punti_per_dieci_euro_acquisto():
-    acquisto = 3
-    punti = ecommerce.calcola_punti_fedelta(acquisto)
-    assert punti == 0
-
-# Prezzo scontato senza sconto
-def test_calcola_prezzo_scontato_senza_sconto():
-    prezzo = 100
-    sconto = 0
-    prezzo_finale = ecommerce.calcola_prezzo_scontato(prezzo, sconto)
-    assert prezzo_finale == 100
-
-# Prezzo scontato con sconto
-def test_calcola_prezzo_scontato_con_sconto():
-    prezzo = 100
-    sconto = 20
-    prezzo_finale = ecommerce.calcola_prezzo_scontato(prezzo, sconto)
-    assert prezzo_finale == 80
-
-# Prezzo scontato con sconto totale
-def test_calcola_prezzo_scontato_sconto_totale():
-    prezzo = 100
-    sconto = 100
-    prezzo_finale = ecommerce.calcola_prezzo_scontato(prezzo, sconto)
-    assert prezzo_finale == 0
-
-# Prezzo negativo
-def test_calcola_prezzo_scontato_prezzo_negativo():
-    prezzo = -10
-    sconto = 20
-    with pytest.raises(ValueError):
-        ecommerce.calcola_prezzo_scontato(prezzo, sconto)
-
-# IVA con aliquota default
-def test_calcola_iva_con_aliquota_default():
-    prezzo_netto = 100
-    prezzo_lordo = ecommerce.calcola_iva(prezzo_netto)
-    assert prezzo_lordo == 122
-
-# IVA con aliquota personalizzata
-def test_calcola_iva_con_aliquota_personalizzata():
-    prezzo_netto = 100
-    aliquota = 10
-    prezzo_lordo = ecommerce.calcola_iva(prezzo_netto, aliquota)
-    assert prezzo_lordo == 110
-
-# IVA con prezzo negativo
-def test_calcola_iva_prezzo_negativo():
-    prezzo_netto = -10
-    with pytest.raises(ValueError):
-        ecommerce.calcola_iva(prezzo_netto)
-
-# Creazione di una riga del carrello
-def test_crea_riga_carrello():
-    nome = "Mouse"
-    prezzo = 20
-    quantita = 2
-    riga = ecommerce.crea_riga_carrello(nome, prezzo, quantita)
-    
-    assert riga["nome"] == "Mouse"
-    assert riga["prezzo"] == 20
-    assert riga["quantita"] == 2
-    assert riga["subtotale"] == 40
-
-# Creazione riga con quantità non valida
-def test_crea_riga_carrello_quantita_non_valida():
-    nome = "Mouse"
-    prezzo = 20
-    quantita = 0
-    with pytest.raises(ValueError):
-        ecommerce.crea_riga_carrello(nome, prezzo, quantita)
-
-# Totale carrello vuoto
-def test_calcola_totale_carrello_vuoto():
-    carrello = []
-    totale = ecommerce.calcola_totale_carrello(carrello)
-    assert totale == 0
-
-# Totale carrello con prodotti
-def test_calcola_totale_carrello_con_prodotti():
-    carrello = [
-        {"nome": "Prodotto 1", "prezzo": 20, "quantita": 1, "subtotale": 20},
-        {"nome": "Prodotto 2", "prezzo": 15, "quantita": 2, "subtotale": 30}
-    ]
-    totale = ecommerce.calcola_totale_carrello(carrello)
-    assert totale == 50
-
-# Costo della spedizione
-def test_calcola_costo_spedizione():
-    peso = 10
-    distanza = 100
-    costo = ecommerce.calcola_costo_spedizione(peso, distanza)
-    assert costo == 10
-
-# Costo della spedizione espressa
-def test_calcola_costo_spedizione_espressa():
-    peso = 10
-    distanza = 100
-    espressa = True
-    costo = ecommerce.calcola_costo_spedizione(peso, distanza, espressa=espressa)
-    assert costo == 20
-
-# Costo della spedizione con peso negativo
-def test_calcola_costo_spedizione_peso_negativo():
-    peso = -1
-    distanza = 100
-    with pytest.raises(ValueError):
-        ecommerce.calcola_costo_spedizione(peso, distanza)
-
-# Punti fedeltà con 10 euro
-def test_calcola_punti_fedelta_dieci_euro():
-    acquisto = 10
-    punti = ecommerce.calcola_punti_fedelta(acquisto)
-    assert punti == 1
-
-# Punti fedeltà con moltiplicatore
-def test_calcola_punti_fedelta_con_moltiplicatore():
-    acquisto = 20
-    moltiplicatore = 2
-    punti = ecommerce.calcola_punti_fedelta(acquisto, moltiplicatore=moltiplicatore)
-    assert punti == 4
-
-# Punti fedeltà con totale negativo
-def test_calcola_punti_fedelta_totale_negativo():
-    acquisto = -10
-    with pytest.raises(ValueError):
-        ecommerce.calcola_punti_fedelta(acquisto)
-
-# Livello cliente bronze
-def test_promuovi_livello_cliente_bronze():
-    punti = 50
-    livello = ecommerce.promuovi_livello_cliente(punti)
-    assert livello == "bronze"
-
-# Livello cliente silver
-def test_promuovi_livello_cliente_silver():
-    punti = 100
-    livello = ecommerce.promuovi_livello_cliente(punti)
-    assert livello == "silver"
-
-# Livello cliente gold
-def test_promuovi_livello_cliente_gold():
-    punti = 500
-    livello = ecommerce.promuovi_livello_cliente(punti)
-    assert livello == "gold"
-
-# Livello cliente con punti negativi
-def test_promuovi_livello_cliente_punti_negativi():
-    punti = -1
-    with pytest.raises(ValueError):
-        ecommerce.promuovi_livello_cliente(punti)
-
-# Applicazione di un codice sconto valido
-def test_applica_codice_sconto_valido():
-    prezzo = 100
-    codice = "SCONTO20"
-    tabella_codici = {"SCONTO20": 20, "SCONTO10": 10}
-    prezzo_finale = ecommerce.applica_codice_sconto(prezzo, codice, tabella_codici)
-    assert prezzo_finale == 80
-
-# Applicazione di un codice sconto inesistente
-def test_applica_codice_sconto_inesistente():
-    prezzo = 100
-    codice = "SCONTO20"
-    tabella_codici = {"SCONTO10": 10}
-    prezzo_finale = ecommerce.applica_codice_sconto(prezzo, codice, tabella_codici)
-    assert prezzo_finale == 100
-
-# Rimozione dei prodotti esauriti
 def test_svuota_articoli_esauriti():
-    carrello = ["Mouse", "Tastiera"]
-    magazzino = {"Mouse": 5, "Tastiera": 0}  # Quantità disponibili in magazzino
-    carrello_aggiornato = ecommerce.svuota_articoli_esauriti(carrello, magazzino)
-    
-    assert "Mouse" in carrello_aggiornato
-    assert "Tastiera" not in carrello_aggiornato
-    assert len(carrello_aggiornato) == 1
+    righe = [
+        {"nome": "Mouse", "subtotale": 20.0},
+        {"nome": "Cuffie", "subtotale": 50.0},
+        {"nome": "Cavo", "subtotale": 5.0},
+    ]
+    magazzino = {"Mouse": 5, "Cuffie": 0}  # Cavo assente dal magazzino
 
-# Data di consegna durante la settimana
-def test_stima_data_consegna_giorno_lavorativo():
-    # 1 gennaio 2024 è un lunedì
-    data_ordine = date(2024, 1, 1)
-    giorni_lavorativi_consegna = 2
-    data_consegna = ecommerce.stima_data_consegna(data_ordine, giorni_lavorativi_consegna)
-    
-    # Ci aspettiamo mercoledì 3 gennaio 2024
-    assert data_consegna == date(2024, 1, 3)
+    risultato = ecommerce.svuota_articoli_esauriti(righe, magazzino)
+    assert len(risultato) == 1
+    assert risultato[0]["nome"] == "Mouse"
 
-# Data di consegna saltando il weekend
-def test_stima_data_consegna_salta_weekend():
-    # 5 gennaio 2024 è un venerdì
-    data_ordine = date(2024, 1, 5)
-    giorni_lavorativi_consegna = 1
-    data_consegna = ecommerce.stima_data_consegna(data_ordine, giorni_lavorativi_consegna)
-    
-    # 1 giorno lavorativo dopo venerdì ci aspettiamo lunedì 8 gennaio 2024
-    assert data_consegna == date(2024, 1, 8)
 
-# Riepilogo del cliente
+def test_calcola_totale_ordine():
+    righe = [
+        {"nome": "Mouse", "subtotale": 20.0},
+        {"nome": "Cuffie", "subtotale": 50.0},
+    ]
+    magazzino = {"Mouse": 2, "Cuffie": 0}
+    tabella_sconti = {"PROMO10": 10}
+
+    ordine = ecommerce.calcola_totale_ordine(
+        righe_carrello=righe,
+        magazzino=magazzino,
+        codice_sconto="PROMO10",
+        tabella_codici=tabella_sconti,
+        aliquota_iva=22,
+    )
+
+    assert len(ordine["righe_valide"]) == 1
+    assert ordine["totale_netto"] == 18.0
+    assert ordine["totale_lordo"] == 21.96
+
+
+# ---------------------------------------------------------------------------
+# Test Spedizione
+# ---------------------------------------------------------------------------
+
+def test_calcola_costo_spedizione():
+    assert ecommerce.calcola_costo_spedizione(10, 100, espressa=False) == 10.0
+    assert ecommerce.calcola_costo_spedizione(10, 100, espressa=True) == 20.0
+
+
+def test_calcola_costo_spedizione_errori():
+    with pytest.raises(ValueError, match="peso e distanza non possono essere negativi"):
+        ecommerce.calcola_costo_spedizione(-1, 100)
+
+    with pytest.raises(ValueError, match="peso e distanza non possono essere negativi"):
+        ecommerce.calcola_costo_spedizione(10, -50)
+
+    with pytest.raises(ValueError, match="peso massimo consentito: 30 kg"):
+        ecommerce.calcola_costo_spedizione(31, 100)
+
+
+def test_stima_data_consegna():
+    venerdi = date(2026, 10, 2)
+    consegna = ecommerce.stima_data_consegna(venerdi, 2)
+    assert consegna == date(2026, 10, 5)
+
+    assert ecommerce.stima_data_consegna(venerdi, 0) == venerdi
+
+
+def test_stima_data_consegna_errore():
+    with pytest.raises(ValueError, match="i giorni lavorativi non possono essere negativi"):
+        ecommerce.stima_data_consegna(date(2026, 10, 1), -1)
+
+
+# ---------------------------------------------------------------------------
+# Test Punti Fedeltà e Cliente
+# ---------------------------------------------------------------------------
+
+def test_calcola_punti_fedelta():
+    assert ecommerce.calcola_punti_fedelta(25.0) == 2
+    assert ecommerce.calcola_punti_fedelta(25.0, moltiplicatore=2) == 4
+    assert ecommerce.calcola_punti_fedelta(3.0) == 0
+
+
+def test_calcola_punti_fedelta_errori():
+    with pytest.raises(ValueError, match="il totale speso non può essere negativo"):
+        ecommerce.calcola_punti_fedelta(-10.0)
+
+    with pytest.raises(ValueError, match="il moltiplicatore deve essere positivo"):
+        ecommerce.calcola_punti_fedelta(50.0, moltiplicatore=0)
+
+
+def test_promuovi_livello_cliente():
+    assert ecommerce.promuovi_livello_cliente(50) == "bronze"
+    assert ecommerce.promuovi_livello_cliente(100) == "silver"
+    assert ecommerce.promuovi_livello_cliente(500) == "gold"
+    assert ecommerce.promuovi_livello_cliente(2000) == "platinum"
+
+
+def test_promuovi_livello_cliente_errore():
+    with pytest.raises(ValueError, match="i punti totali non possono essere negativi"):
+        ecommerce.promuovi_livello_cliente(-5)
+
+
 def test_riepilogo_cliente():
-    totale_speso = 1000
-    riepilogo = ecommerce.riepilogo_cliente(totale_speso)
-    
-    assert riepilogo["totale_speso"] == 1000
-    assert riepilogo["punti"] == 100
-    assert riepilogo["livello"] == "silver"
+    riepilogo = ecommerce.riepilogo_cliente(1500.0, moltiplicatore=1)
+    assert riepilogo == {
+        "totale_speso": 1500.0,
+        "punti": 150,
+        "livello": "silver",
+    }
