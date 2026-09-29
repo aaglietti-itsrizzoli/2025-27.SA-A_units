@@ -1,0 +1,89 @@
+# Istruzioni per LLM
+# Feature indica il modulo python da importare il quale contiene le fn:
+# Gli Scenario sono i nomi delle funzioni di test che dovrai generare
+# Given contiene la descrizione dei parametri di input
+# When descrive quali fn: del modulo da testare
+# Then contiene la descrizione delle asserzioni da svolgere
+
+
+Feature: ecommerce
+
+  # 0 Punti fedeltà
+  Scenario: test_calcola_punti_fedelta_zero_punti_per_dieci_euro_acquisto
+    Given un acquisto di 3 euro
+    When un cliente conclude un acquisto fn:calcola_punti_fedelta ne calcola i punti fedeltà
+    Then il cliente riceve 0 punti fedeltà perchè l'acquisto è inferiore a 10 euro
+
+  Scenario: test_calcola_punti_fedelta_validi
+    Given un acquisto di 25 euro e moltiplicatore 2
+    When si calcolano i punti fn:calcola_punti_fedelta
+    Then si ottengono 4 punti fedelta
+
+  Scenario: test_calcola_punti_fedelta_eccezioni
+    Given un acquisto negativo o un moltiplicatore <= 0
+    When si calcolano i punti fn:calcola_punti_fedelta
+    Then viene sollevata un'eccezione ValueError
+
+  # Livello cliente
+  Scenario: test_promuovi_livello_cliente
+    Given vari punteggi (0, 100, 500, 2000, e negativo)
+    When si richiede il livello fn:promuovi_livello_cliente
+    Then vengono restituiti bronze, silver, gold, platinum e ValueError per negativi
+
+  Scenario: test_riepilogo_cliente
+    Given uno storico di spesa di 150 euro
+    When si richiede il riepilogo fn:riepilogo_cliente
+    Then viene restituito il dettaglio cliente
+
+  # Catalogo e prezzi
+  Scenario: test_calcola_prezzo_scontato_valido
+    Given un prezzo di 100 euro e uno sconto del 20 percento
+    When viene applicato lo sconto fn:calcola_prezzo_scontato
+    Then il prezzo finale risulta 80 euro
+
+  Scenario: test_calcola_prezzo_scontato_eccezioni
+    Given un prezzo negativo o sconto fuori da 0-100
+    When viene applicato lo sconto fn:calcola_prezzo_scontato
+    Then viene sollevata un'eccezione ValueError
+
+  Scenario: test_applica_codice_sconto
+    Given un codice sconto valido o non esistente
+    When si applica il codice fn:applica_codice_sconto
+    Then si applica la percentuale corretta o zero
+
+  Scenario: test_calcola_iva
+    Given un prezzo netto e un'aliquota
+    When si calcola l'IVA fn:calcola_iva
+    Then viene restituito il prezzo lordo o ValueError per valori negativi
+
+  # Carrello
+  Scenario: test_crea_riga_carrello
+    Given nome prodotto, prezzo unitario e quantita
+    When si crea la riga fn:crea_riga_carrello
+    Then restituisce la riga o ValueError per quantita/prezzo negativi
+
+  Scenario: test_calcola_totale_carrello
+    Given una lista di righe carrello
+    When si calcola il totale fn:calcola_totale_carrello
+    Then restituisce la somma dei subtotali
+
+  Scenario: test_svuota_articoli_esauriti
+    Given un carrello e uno stato magazzino
+    When si filtrano gli esauriti fn:svuota_articoli_esauriti
+    Then rimangono solo i prodotti disponibili
+
+  Scenario: test_calcola_totale_ordine
+    Given carrello, magazzino, codice sconto e aliquota IVA
+    When si calcola l'ordine fn:calcola_totale_ordine
+    Then restituisce il dettaglio ordine completo
+
+  # Spedizione
+  Scenario: test_calcola_costo_spedizione
+    Given peso, distanza ed eventuale spedizione espressa
+    When si calcola la spedizione fn:calcola_costo_spedizione
+    Then restituisce il costo corretto o ValueError se peso > 30kg o valori negativi
+
+  Scenario: test_stima_data_consegna
+    Given data ordine e giorni lavorativi
+    When si stima la data fn:stima_data_consegna
+    Then restituisce la data saltando il weekend o ValueError se giorni negativi
