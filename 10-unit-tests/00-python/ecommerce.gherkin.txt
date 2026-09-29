@@ -14,8 +14,14 @@ Feature: ecommerce
     When un cliente conclude un acquisto fn:calcola_punti_fedelta ne calcola i punti fedeltà
     Then il cliente riceve 0 punti fedeltà perchè l'acquisto è inferiore a 10 euro
 
-  
-  Scenario: test_calcola_totale_ordine
-    Given righe_carrello una lista con un dizionario che ha chiave "nome" e valore "mele"
-    When un cliente richiede l'esecuzione di fn:calcola_totale_ordine avente righe_carrello come primo parametro e come secondo un dizionario che rappresenta il magazzino senza mele
-    Then il valore di ritorno deve avere escluso le mele dal totale perchè non sono disponibili  in magazzino
+  # Promuovi livello cliente
+  Scenario: test_promuovi_cliente
+    Given un cliente con 99 punti fedelta
+    When un cliente conclude un acquisto di 12 euro fn:promuovi_livello_cliente
+    Then il cliente viene promosso al livello silver
+
+  # Costo spedizione
+  Scenario: test_consegna_espressa
+    Given una spedizione di 27 kg, a 67 km, espressa
+    When un cliente inserisce l'indirizzo di consengna e seleziona consegna espressa
+    Then la consegna costa 17.84
