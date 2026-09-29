@@ -6,7 +6,7 @@
 # Then contiene la descrizione delle asserzioni da svolgere
 
 
-Feature: E-Commerce Shopping Cart and Order Processing
+Feature: E-Commerce 
 
   Scenario: Calcolo del totale con carrello vuoto
     Given un carrello della spesa vuoto
