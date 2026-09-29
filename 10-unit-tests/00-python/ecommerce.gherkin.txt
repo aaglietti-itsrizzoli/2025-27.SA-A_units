@@ -31,6 +31,6 @@ Feature: ecommerce
   Scenario: test_promuovi_livello_cliente_punti_valore_altissimo
   Given un numero di punti oltre il limite integer
   When la funzione fn:promuovi_livello_cliente viene chiamata su questo test_promuovi_livello_cliente_punti_valore_altissimo
-  Then la funzione va in errore
+  Then la funzione deve restituire comunque livello platinum
 
   
