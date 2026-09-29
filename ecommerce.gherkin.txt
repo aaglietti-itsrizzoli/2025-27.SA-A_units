@@ -6,10 +6,39 @@
 # Then contiene la descrizione delle asserzioni da svolgere
 
 
-Feature: ecommerce
+Feature: E-Commerce Shopping Cart and Order Processing
 
-  # 0 Punti fedeltà
-  Scenario: test_calcola_punti_fedelta_zero_punti_per_dieci_euro_acquisto
-    Given un acquisto di 3 euro
-    When un cliente conclude un acquisto fn:calcola_punti_fedelta ne calcola i punti fedeltà
-    Then il cliente riceve 0 punti fedeltà perchè l'acquisto è inferiore a 10 euro
+  Scenario: Calcolo del totale con carrello vuoto
+    Given un carrello della spesa vuoto
+    When calcolo il totale dell'ordine
+    Then il totale deve essere 0.00
+    And non deve essere applicato alcun costo di spedizione
+
+  Scenario: Aggiunta di prodotti validi al carrello
+    Given un carrello della spesa vuoto
+    When aggiungo il prodotto "Laptop" con prezzo 1000.00 e quantità 1
+    And aggiungo il prodotto "Mouse" con prezzo 25.00 e quantità 2
+    Then il carrello deve contenere 2 articoli distinti
+    And il subtotale del carrello deve essere 1050.00
+
+  Scenario: Applicazione di un codice sconto percentuale valido
+    Given un carrello con un subtotale di 100.00
+    When applico il codice sconto "SUMMER10" con valore 10%
+    Then il totale scontato deve essere 90.00
+
+  Scenario: Tentativo di inserire un prodotto con prezzo o quantità non validi
+    Given un carrello della spesa
+    When tento di aggiungere un prodotto con prezzo -10.00
+    Then il sistema deve sollevare un errore "ValueError"
+    When tento di aggiungere un prodotto con quantità 0
+    Then il sistema deve sollevare un errore "ValueError"
+
+  Scenario: Rimozione di un prodotto dal carrello
+    Given un carrello contenente il prodotto "Tastiera"
+    When rimuovo il prodotto "Tastiera"
+    Then il carrello deve risultare vuoto
+
+  Scenario: Applicazione della spedizione gratuita sopra una soglia
+    Given un carrello con un totale superiore a 50.00
+    When calcolo le spese di spedizione
+    Then le spese di spedizione devono essere 0.00
