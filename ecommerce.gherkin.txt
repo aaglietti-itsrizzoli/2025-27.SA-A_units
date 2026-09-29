@@ -8,8 +8,176 @@
 
 Feature: ecommerce
 
-  # 0 Punti fedeltà
+  # Catalogo e prezzi
+  Scenario: test_calcola_prezzo_scontato_applica_percentuale_e_arrotonda
+    Given un prezzo di 19.99 euro e uno sconto del 15 percento
+    When fn:calcola_prezzo_scontato calcola il prezzo scontato
+    Then il prezzo restituito è 16.99 euro
+
+  Scenario: test_calcola_prezzo_scontato_gestisce_sconto_zero_e_centopercento
+    Given prezzi non negativi con percentuali di sconto rispettivamente 0 e 100
+    When fn:calcola_prezzo_scontato calcola entrambi i prezzi finali
+    Then il primo prezzo resta invariato e il secondo è zero
+
+  Scenario: test_calcola_prezzo_scontato_rifiuta_prezzo_negativo
+    Given un prezzo negativo e una percentuale valida
+    When fn:calcola_prezzo_scontato calcola il prezzo
+    Then viene sollevata ValueError
+
+  Scenario: test_calcola_prezzo_scontato_rifiuta_percentuale_fuori_intervallo
+    Given uno sconto inferiore a 0 o superiore a 100
+    When fn:calcola_prezzo_scontato calcola il prezzo
+    Then in entrambi i casi viene sollevata ValueError
+
+  Scenario: test_applica_codice_sconto_applica_codice_presente
+    Given un prezzo di 80 euro e un codice valido associato al 25 percento
+    When fn:applica_codice_sconto applica il codice promozionale
+    Then il prezzo scontato è 60 euro
+
+  Scenario: test_applica_codice_sconto_ignora_codice_inesistente
+    Given un prezzo di 12.34 euro e un codice assente dalla tabella
+    When fn:applica_codice_sconto applica il codice promozionale
+    Then il prezzo restituito resta 12.34 euro
+
+  Scenario: test_calcola_iva_applica_aliquota_predefinita
+    Given un prezzo netto di 100 euro senza specificare l'aliquota
+    When fn:calcola_iva calcola il prezzo lordo
+    Then il prezzo lordo è 122 euro
+
+  Scenario: test_calcola_iva_applica_aliquota_personalizzata_e_zero
+    Given un prezzo netto di 10 euro e aliquote rispettivamente 5 e 0
+    When fn:calcola_iva calcola i prezzi lordi
+    Then il primo prezzo è 10.50 euro e il secondo resta 10 euro
+
+  Scenario: test_calcola_iva_rifiuta_valori_negativi
+    Given un prezzo netto negativo oppure un'aliquota negativa
+    When fn:calcola_iva calcola il prezzo lordo
+    Then in entrambi i casi viene sollevata ValueError
+
+  # Carrello
+  Scenario: test_crea_riga_carrello_calcola_subtotale
+    Given un prodotto con prezzo unitario 4.25 euro e quantità 3
+    When fn:crea_riga_carrello crea la riga
+    Then la riga contiene nome, prezzo, quantità e subtotale 12.75 euro
+
+  Scenario: test_crea_riga_carrello_accetta_prezzo_zero
+    Given un prodotto gratuito con quantità 1
+    When fn:crea_riga_carrello crea la riga
+    Then il subtotale della riga è zero
+
+  Scenario: test_crea_riga_carrello_rifiuta_quantita_non_positiva
+    Given una quantità pari a zero o negativa
+    When fn:crea_riga_carrello crea la riga
+    Then in entrambi i casi viene sollevata ValueError
+
+  Scenario: test_crea_riga_carrello_rifiuta_prezzo_negativo
+    Given un prezzo unitario negativo e una quantità positiva
+    When fn:crea_riga_carrello crea la riga
+    Then viene sollevata ValueError
+
+  Scenario: test_calcola_totale_carrello_somma_subtotali
+    Given un carrello con subtotali pari a 12.50 e 3.25 euro
+    When fn:calcola_totale_carrello somma gli articoli
+    Then il totale è 15.75 euro
+
+  Scenario: test_calcola_totale_carrello_vuoto_restituisce_zero
+    Given un carrello vuoto
+    When fn:calcola_totale_carrello somma gli articoli
+    Then il totale è zero
+
+  Scenario: test_svuota_articoli_esauriti_filtra_senza_modificare_input
+    Given righe per prodotti disponibili, esauriti o assenti dal magazzino
+    When fn:svuota_articoli_esauriti filtra le righe
+    Then resta solo il prodotto disponibile e la lista originale non cambia
+
+  Scenario: test_calcola_totale_ordine_filtra_sconta_e_applica_iva
+    Given un carrello con prodotti disponibili ed esauriti, sconto del 10 percento e IVA al 10 percento
+    When fn:calcola_totale_ordine calcola il riepilogo
+    Then usa solo le righe disponibili, restituisce il netto scontato e il lordo con IVA
+
+  Scenario: test_calcola_totale_ordine_senza_sconto
+    Given un carrello valido senza codice sconto utilizzabile
+    When fn:calcola_totale_ordine calcola il riepilogo
+    Then il totale netto non è scontato e il lordo include l'IVA
+
+  # Spedizione e consegna
+  Scenario: test_calcola_costo_spedizione_calcola_tariffa_standard
+    Given peso 2 kg, distanza 100 km e spedizione non espressa
+    When fn:calcola_costo_spedizione calcola il costo
+    Then il costo è 6 euro
+
+  Scenario: test_calcola_costo_spedizione_raddoppia_tariffa_espressa
+    Given peso 2 kg, distanza 100 km e spedizione espressa
+    When fn:calcola_costo_spedizione calcola il costo
+    Then il costo è 12 euro
+
+  Scenario: test_calcola_costo_spedizione_accetta_limite_massimo
+    Given una spedizione di 30 kg con distanza zero
+    When fn:calcola_costo_spedizione calcola il costo
+    Then il costo è 18 euro
+
+  Scenario: test_calcola_costo_spedizione_rifiuta_peso_o_distanza_negativi
+    Given un peso negativo oppure una distanza negativa
+    When fn:calcola_costo_spedizione calcola il costo
+    Then in entrambi i casi viene sollevata ValueError
+
+  Scenario: test_calcola_costo_spedizione_rifiuta_peso_superiore_al_limite
+    Given un peso superiore a 30 kg
+    When fn:calcola_costo_spedizione calcola il costo
+    Then viene sollevata ValueError
+
+  Scenario: test_stima_data_consegna_salta_fine_settimana
+    Given un ordine effettuato venerdì e 2 giorni lavorativi
+    When fn:stima_data_consegna calcola la data stimata
+    Then la consegna è martedì
+
+  Scenario: test_stima_data_consegna_con_zero_giorni
+    Given una data d'ordine e zero giorni lavorativi
+    When fn:stima_data_consegna calcola la data stimata
+    Then la data restituita coincide con quella d'ordine
+
+  Scenario: test_stima_data_consegna_rifiuta_giorni_negativi
+    Given un numero negativo di giorni lavorativi
+    When fn:stima_data_consegna calcola la data stimata
+    Then viene sollevata ValueError
+
+  # Fedeltà cliente / punti
   Scenario: test_calcola_punti_fedelta_zero_punti_per_dieci_euro_acquisto
     Given un acquisto di 3 euro
-    When un cliente conclude un acquisto fn:calcola_punti_fedelta ne calcola i punti fedeltà
-    Then il cliente riceve 0 punti fedeltà perchè l'acquisto è inferiore a 10 euro
+    When fn:calcola_punti_fedelta calcola i punti fedeltà
+    Then il cliente riceve 0 punti perché l'acquisto è inferiore a 10 euro
+
+  Scenario: test_calcola_punti_fedelta_usa_soglia_e_moltiplicatore
+    Given acquisti di 29.99 euro e 25 euro con moltiplicatore 3
+    When fn:calcola_punti_fedelta calcola i punti fedeltà
+    Then il primo acquisto assegna 2 punti e il secondo 6 punti
+
+  Scenario: test_calcola_punti_fedelta_rifiuta_spesa_negativa
+    Given un totale speso negativo
+    When fn:calcola_punti_fedelta calcola i punti
+    Then viene sollevata ValueError
+
+  Scenario: test_calcola_punti_fedelta_rifiuta_moltiplicatore_non_positivo
+    Given un moltiplicatore pari a zero o negativo
+    When fn:calcola_punti_fedelta calcola i punti
+    Then in entrambi i casi viene sollevata ValueError
+
+  Scenario: test_promuovi_livello_cliente_assegna_livelli_sulle_soglie
+    Given punti totali pari a 0, 100, 500 e 2000
+    When fn:promuovi_livello_cliente determina i livelli
+    Then i livelli sono rispettivamente bronze, silver, gold e platinum
+
+  Scenario: test_promuovi_livello_cliente_rifiuta_punti_negativi
+    Given punti totali negativi
+    When fn:promuovi_livello_cliente determina il livello
+    Then viene sollevata ValueError
+
+  Scenario: test_riepilogo_cliente_compone_punti_e_livello
+    Given una spesa storica di 1000 euro e moltiplicatore 2
+    When fn:riepilogo_cliente crea il riepilogo
+    Then restituisce spesa 1000, 200 punti e livello silver
+
+  Scenario: test_riepilogo_cliente_rifiuta_spesa_negativa
+    Given una spesa storica negativa
+    When fn:riepilogo_cliente crea il riepilogo
+    Then viene sollevata ValueError
