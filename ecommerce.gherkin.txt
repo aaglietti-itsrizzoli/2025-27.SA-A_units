@@ -1,15 +1,47 @@
 # Istruzioni per LLM
-# Feature indica il modulo python da importare il quale contiene le fn:
-# Gli Scenario sono i nomi delle funzioni di test che dovrai generare
-# Given contiene la descrizione dei parametri di input
-# When descrive quali fn: del modulo da testare
-# Then contiene la descrizione delle asserzioni da svolgere
-
+#
+# Usa questo file come unica specifica funzionale. Non leggere, aprire o
+# consultare ecommerce.py: il modulo da testare non deve essere visibile.
+#
+# Feature indica il modulo Python da importare, Scenario il nome della funzione
+# di test da generare, Given i parametri, When l'azione e Then le asserzioni.
+# Genera il codice pytest in ecommerce_test.py. Usa esclusivamente le funzioni
+# nominate negli scenari e non inventare API non presenti nella specifica.
 
 Feature: ecommerce
 
-  # 0 Punti fedeltà
   Scenario: test_calcola_punti_fedelta_zero_punti_per_dieci_euro_acquisto
     Given un acquisto di 3 euro
     When un cliente conclude un acquisto fn:calcola_punti_fedelta ne calcola i punti fedeltà
     Then il cliente riceve 0 punti fedeltà perchè l'acquisto è inferiore a 10 euro
+
+  Scenario: test_calcola_prezzo_scontato
+    Given un prezzo di 100 euro e uno sconto del 20 percento
+    When si calcola il prezzo scontato fn:calcola_prezzo_scontato
+    Then il prezzo finale è 80 euro
+
+  Scenario: test_applica_codice_sconto
+    Given un prezzo di 80 euro e il codice PROMO con sconto del 25 percento
+    When si applica il codice fn:applica_codice_sconto
+    Then il prezzo finale è 60 euro
+
+  Scenario: test_calcola_iva
+    Given un prezzo netto di 100 euro e aliquota IVA del 22 percento
+    When si calcola l'IVA fn:calcola_iva
+    Then il prezzo lordo è 122 euro
+
+  Scenario: test_calcola_totale_ordine
+    Given un carrello con un articolo disponibile e uno esaurito
+    When si calcola il totale fn:calcola_totale_ordine
+    Then gli articoli esauriti sono esclusi, lo sconto è applicato e viene calcolata l'IVA
+
+  Scenario: test_calcola_costo_spedizione
+    Given una spedizione di 2 kg per 100 km
+    When si calcola il costo fn:calcola_costo_spedizione
+    Then il costo ordinario è 6 euro e quello espresso è 12 euro
+
+  Scenario: test_stima_data_consegna
+    Given un ordine effettuato venerdì e un giorno lavorativo di consegna
+    When si stima la consegna fn:stima_data_consegna
+    Then la consegna è prevista per lunedì
+

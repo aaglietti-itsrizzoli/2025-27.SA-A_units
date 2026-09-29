@@ -6,8 +6,7 @@ import ecommerce
 
 
 def test_calcola_punti_fedelta_zero_punti_per_dieci_euro_acquisto():
-    punti_fedelta = ecommerce.calcola_punti_fedelta(3, 2)
-    assert punti_fedelta == 0
+    assert ecommerce.calcola_punti_fedelta(3) == 0
 
 
 @pytest.mark.parametrize(
@@ -24,13 +23,13 @@ def test_calcola_prezzo_scontato_rifiuta_valori_non_validi(prezzo, sconto):
         ecommerce.calcola_prezzo_scontato(prezzo, sconto)
 
 
-def test_applica_codice_sconto_usa_zero_per_codice_inesistente():
-    codici = {"ESTATE": 25}
-    assert ecommerce.applica_codice_sconto(80, "ESTATE", codici) == 60
-    assert ecommerce.applica_codice_sconto(80, "NOPE", codici) == 80
+def test_applica_codice_sconto():
+    codici = {"PROMO": 25}
+    assert ecommerce.applica_codice_sconto(80, "PROMO", codici) == 60
+    assert ecommerce.applica_codice_sconto(80, "INESISTENTE", codici) == 80
 
 
-def test_calcola_iva_con_aliquota_default_e_personalizzata():
+def test_calcola_iva():
     assert ecommerce.calcola_iva(100) == 122
     assert ecommerce.calcola_iva(100, 10) == 110
 
@@ -41,7 +40,7 @@ def test_calcola_iva_rifiuta_valori_negativi(prezzo, aliquota):
         ecommerce.calcola_iva(prezzo, aliquota)
 
 
-def test_crea_riga_carrello_calcola_subtotale():
+def test_crea_riga_carrello():
     assert ecommerce.crea_riga_carrello("Libro", 12.50, 2) == {
         "nome": "Libro",
         "prezzo_unitario": 12.50,
@@ -56,7 +55,7 @@ def test_crea_riga_carrello_rifiuta_valori_non_validi(prezzo, quantita):
         ecommerce.crea_riga_carrello("Libro", prezzo, quantita)
 
 
-def test_calcola_totale_carrello_supporta_carrello_vuoto():
+def test_calcola_totale_carrello():
     righe = [
         ecommerce.crea_riga_carrello("A", 10, 2),
         ecommerce.crea_riga_carrello("B", 3.50, 1),
@@ -65,7 +64,7 @@ def test_calcola_totale_carrello_supporta_carrello_vuoto():
     assert ecommerce.calcola_totale_carrello([]) == 0
 
 
-def test_svuota_articoli_esauriti_restituisce_una_nuova_lista():
+def test_svuota_articoli_esauriti_non_modifica_lista_input():
     righe = [
         ecommerce.crea_riga_carrello("disponibile", 10, 1),
         ecommerce.crea_riga_carrello("esaurito", 5, 1),
@@ -78,16 +77,13 @@ def test_svuota_articoli_esauriti_restituisce_una_nuova_lista():
     assert risultato is not righe
 
 
-def test_calcola_totale_ordine_filtra_sconta_e_applica_iva():
+def test_calcola_totale_ordine_con_sconto_e_articoli_esauriti():
     righe = [
         ecommerce.crea_riga_carrello("disponibile", 50, 2),
         ecommerce.crea_riga_carrello("esaurito", 100, 1),
     ]
     risultato = ecommerce.calcola_totale_ordine(
-        righe,
-        {"disponibile": 1, "esaurito": 0},
-        "PROMO",
-        {"PROMO": 10},
+        righe, {"disponibile": 1, "esaurito": 0}, "PROMO", {"PROMO": 10}
     )
     assert risultato == {
         "righe_valide": [righe[0]],
@@ -108,9 +104,7 @@ def test_calcola_totale_ordine_senza_codice_sconto():
     [(2, 100, False, 6.0), (2, 100, True, 12.0), (30, 0, False, 18.0)],
 )
 def test_calcola_costo_spedizione(peso, distanza, espressa, atteso):
-    assert ecommerce.calcola_costo_spedizione(
-        peso, distanza, espressa
-    ) == atteso
+    assert ecommerce.calcola_costo_spedizione(peso, distanza, espressa) == atteso
 
 
 @pytest.mark.parametrize("peso, distanza", [(-1, 10), (1, -1), (31, 0)])
@@ -143,24 +137,4 @@ def test_calcola_punti_fedelta_rifiuta_valori_non_validi(
         ecommerce.calcola_punti_fedelta(totale, moltiplicatore)
 
 
-@pytest.mark.parametrize(
-    "punti, livello",
-    [(0, "bronze"), (99, "bronze"), (100, "silver"),
-     (499, "silver"), (500, "gold"), (1999, "gold"),
-     (2000, "platinum")],
-)
-def test_promuovi_livello_cliente(punti, livello):
-    assert ecommerce.promuovi_livello_cliente(punti) == livello
 
-
-def test_promuovi_livello_cliente_rifiuta_punti_negativi():
-    with pytest.raises(ValueError):
-        ecommerce.promuovi_livello_cliente(-1)
-
-
-def test_riepilogo_cliente_compone_punti_e_livello():
-    assert ecommerce.riepilogo_cliente(5000, 1) == {
-        "totale_speso": 5000,
-        "punti": 500,
-        "livello": "gold",
-    }
