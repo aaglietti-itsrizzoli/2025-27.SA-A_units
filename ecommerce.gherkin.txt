@@ -1,15 +1,172 @@
-# Istruzioni per LLM
-# Feature indica il modulo python da importare il quale contiene le fn:
-# Gli Scenario sono i nomi delle funzioni di test che dovrai generare
-# Given contiene la descrizione dei parametri di input
-# When descrive quali fn: del modulo da testare
-# Then contiene la descrizione delle asserzioni da svolgere
-
-
 Feature: ecommerce
 
-  # 0 Punti fedeltà
+  # ===========================================================================
+  # Catalogo e prezzi
+  # ===========================================================================
+
+  Scenario: test_calcola_prezzo_scontato_valido
+    Given un prezzo di 100.0 euro e una percentuale di sconto del 20
+    When fn:calcola_prezzo_scontato viene eseguita
+    Then il prezzo finale restituito deve essere 80.0 euro
+
+  Scenario: test_calcola_prezzo_scontato_sconto_zero
+    Given un prezzo di 50.0 euro e una percentuale di sconto del 0
+    When fn:calcola_prezzo_scontato viene eseguita
+    Then il prezzo finale restituito deve essere 50.0 euro
+
+  Scenario: test_calcola_prezzo_scontato_sconto_totale
+    Given un prezzo di 50.0 euro e una percentuale di sconto del 100
+    When fn:calcola_prezzo_scontato viene eseguita
+    Then il prezzo finale restituito deve essere 0.0 euro
+
+  Scenario: test_calcola_prezzo_scontato_prezzo_negativo_solleva_errore
+    Given un prezzo di -10.0 euro e una percentuale di sconto del 10
+    When fn:calcola_prezzo_scontato viene eseguita
+    Then solleva ValueError con messaggio "il prezzo non può essere negativo"
+
+  Scenario: test_calcola_prezzo_scontato_percentuale_non_valida_solleva_errore
+    Given un prezzo di 100.0 euro e una percentuale di sconto di 150
+    When fn:calcola_prezzo_scontato viene eseguita
+    Then solleva ValueError con messaggio "la percentuale di sconto deve essere tra 0 e 100"
+
+  Scenario: test_applica_codice_sconto_esistente
+    Given un prezzo di 100.0 euro e il codice "ESTATE20" presente nella tabella con sconto del 20%
+    When fn:applica_codice_sconto viene eseguita
+    Then il prezzo finale restituito deve essere 80.0 euro
+
+  Scenario: test_applica_codice_sconto_non_esistente
+    Given un prezzo di 100.0 euro e il codice "NON_ESISTE" non presente nella tabella
+    When fn:applica_codice_sconto viene eseguita
+    Then il prezzo finale restituito deve essere 100.0 euro senza sconti applicati
+
+  Scenario: test_calcola_iva_default
+    Given un prezzo netto di 100.0 euro e nessuna aliquota specificata
+    When fn:calcola_iva viene eseguita
+    Then il prezzo lordo restituito deve essere 122.0 euro con IVA al 22%
+
+  Scenario: test_calcola_iva_aliquota_personalizzata
+    Given un prezzo netto di 100.0 euro e un'aliquota del 10%
+    When fn:calcola_iva viene eseguita
+    Then il prezzo lordo restituito deve essere 110.0 euro
+
+  Scenario: test_calcola_iva_prezzo_negativo_solleva_errore
+    Given un prezzo netto di -50.0 euro
+    When fn:calcola_iva viene eseguita
+    Then solleva ValueError con messaggio "il prezzo netto non può essere negativo"
+
+  Scenario: test_calcola_iva_aliquota_negativa_solleva_errore
+    Given un prezzo netto di 100.0 euro e un'aliquota del -5%
+    When fn:calcola_iva viene eseguita
+    Then solleva ValueError con messaggio "l'aliquota non può essere negativa"
+
+  # ===========================================================================
+  # Carrello
+  # ===========================================================================
+
+  Scenario: test_crea_riga_carrello_valida
+    Given il prodotto "Mouse", prezzo unitario 25.0 euro e quantità 2
+    When fn:crea_riga_carrello viene eseguita
+    Then restituisce un dizionario contenente il subtotale arrotondato a 50.0 euro
+
+  Scenario: test_crea_riga_carrello_quantita_non_valida_solleva_errore
+    Given il prodotto "Tastiera", prezzo unitario 50.0 euro e quantità 0
+    When fn:crea_riga_carrello viene eseguita
+    Then solleva ValueError con messaggio "la quantità deve essere maggiore di zero"
+
+  Scenario: test_crea_riga_carrello_prezzo_negativo_solleva_errore
+    Given il prodotto "Monitor", prezzo unitario -100.0 euro e quantità 1
+    When fn:crea_riga_carrello viene eseguita
+    Then solleva ValueError con messaggio "il prezzo unitario non può essere negativo"
+
+  Scenario: test_calcola_totale_carrello_con_righe
+    Given una lista di righe carrello con subtotali 25.0 e 15.5 euro
+    When fn:calcola_totale_carrello viene eseguita
+    Then il totale restituito deve essere 40.5 euro
+
+  Scenario: test_calcola_totale_carrello_vuoto
+    Given un carrello vuoto senza righe
+    When fn:calcola_totale_carrello viene eseguita
+    Then il totale restituito deve essere 0.0 euro
+
+  Scenario: test_svuota_articoli_esauriti
+    Given un carrello con "ProdottoA" e "ProdottoB" e un magazzino con solo "ProdottoA" disponibile
+    When fn:svuota_articoli_esauriti viene eseguita
+    Then restituisce una nuova lista contenente solo "ProdottoA" senza modificare la lista originale
+
+  Scenario: test_calcola_totale_ordine_completo
+    Given un carrello con vari articoli, magazzino con scorte, codice sconto valido e aliquota IVA
+    When fn:calcola_totale_ordine viene eseguita
+    Then restituisce un dizionario con le righe valide, il totale netto scontato e il totale lordo comprensivo di IVA
+
+  # ===========================================================================
+  # Spedizione
+  # ===========================================================================
+
+  Scenario: test_calcola_costo_spedizione_standard
+    Given peso 5.0 kg, distanza 100.0 km e spedizione standard
+    When fn:calcola_costo_spedizione viene eseguita
+    Then il costo di spedizione restituito deve essere 7.5 euro
+
+  Scenario: test_calcola_costo_spedizione_espressa
+    Given peso 5.0 kg, distanza 100.0 km e spedizione espressa
+    When fn:calcola_costo_spedizione viene eseguita
+    Then il costo di spedizione restituito deve essere 15.0 euro (raddoppiato)
+
+  Scenario: test_calcola_costo_spedizione_peso_eccessivo_solleva_errore
+    Given peso 35.0 kg e distanza 10.0 km
+    When fn:calcola_costo_spedizione viene eseguita
+    Then solleva ValueError con messaggio "peso massimo consentito: 30 kg"
+
+  Scenario: test_calcola_costo_spedizione_parametri_negativi_solleva_errore
+    Given peso -2.0 kg o distanza -10.0 km
+    When fn:calcola_costo_spedizione viene eseguita
+    Then solleva ValueError con messaggio "peso e distanza non possono essere negativi"
+
+  Scenario: test_stima_data_consegna_senza_weekend
+    Given data ordine Lunedì 2026-03-02 e 3 giorni lavorativi
+    When fn:stima_data_consegna viene eseguita
+    Then la data stimata di consegna deve essere Giovedì 2026-03-05
+
+  Scenario: test_stima_data_consegna_con_weekend
+    Given data ordine Giovedì 2026-03-05 e 3 giorni lavorativi
+    When fn:stima_data_consegna viene eseguita
+    Then la data stimata di consegna deve essere Martedì 2026-03-10 saltando il sabato e la domenica
+
+  Scenario: test_stima_data_consegna_giorni_negativi_solleva_errore
+    Given data ordine 2026-03-02 e giorni lavorativi -1
+    When fn:stima_data_consegna viene eseguita
+    Then solleva ValueError con messaggio "i giorni lavorativi non possono essere negativi"
+
+  # ===========================================================================
+  # Fedeltà cliente / punti
+  # ===========================================================================
+
   Scenario: test_calcola_punti_fedelta_zero_punti_per_dieci_euro_acquisto
     Given un acquisto di 3 euro
     When un cliente conclude un acquisto fn:calcola_punti_fedelta ne calcola i punti fedeltà
     Then il cliente riceve 0 punti fedeltà perchè l'acquisto è inferiore a 10 euro
+
+  Scenario: test_calcola_punti_fedelta_con_moltiplicatore
+    Given un acquisto di 25.0 euro e un moltiplicatore promozionale di 2
+    When fn:calcola_punti_fedelta viene eseguita
+    Then il cliente riceve 4 punti fedeltà (2 punti base * 2)
+
+  Scenario: test_calcola_punti_fedelta_parametri_non_validi_solleva_errore
+    Given un totale speso negativo o un moltiplicatore minore o uguale a zero
+    When fn:calcola_punti_fedelta viene eseguita
+    Then solleva ValueError opportuno
+
+  Scenario: test_promuovi_livello_cliente_soglie
+    Given un numero di punti totali per cliente (0, 100, 500, 2000)
+    When fn:promuovi_livello_cliente viene eseguita
+    Then restituisce rispettivamente i livelli "bronze", "silver", "gold" e "platinum"
+
+  Scenario: test_promuovi_livello_cliente_punti_negativi_solleva_errore
+    Given un ammontare punti pari a -10
+    When fn:promuovi_livello_cliente viene eseguita
+    Then solleva ValueError con messaggio "i punti totali non possono essere negativi"
+
+  Scenario: test_riepilogo_cliente_completo
+    Given uno storico speso di 150.0 euro e moltiplicatore 1
+    When fn:riepilogo_cliente viene eseguita
+    Then restituisce un dizionario con totale speso, 15 punti e livello "bronze"
