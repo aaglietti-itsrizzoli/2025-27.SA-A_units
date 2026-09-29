@@ -14,8 +14,23 @@ Feature: ecommerce
     When un cliente conclude un acquisto fn:calcola_punti_fedelta ne calcola i punti fedeltà
     Then il cliente riceve 0 punti fedeltà perchè l'acquisto è inferiore a 10 euro
 
+  #1 Prezzo scontato
+  Scenario: test_calcola_prezzo_scontato_prezzo_negativo_percentuale_sconto_non_intera
+  Given un prezzo negativo (-4 euro) and una percentuale di sconto non intera (0.75)
+  When fn:calcola_prezzo_scontato calcola il nuovo prezzo
+  Then la funzione solleva un errore di tipo ValueError per input non validi
+
+  #2 Articoli esauriti
+  Scenario: test_svuota_articoli_esauriti_articolo_non_esistente
+    Given un carrello con i prodotti "prodotto_a" e "prodotto_b" 
+    and un magazzino che contiene solo la disponibilità per "prodotto_a" 
+    When la funzione fn:svuota_articoli_esauriti viene chiamata su un prodotto che non esiste
+    Then la funzione ritorna una nuova lista che contiene solo i prodotti disponibili "prodotto_a"
+
+  #3 Livello cliente
+  Scenario: test_promuovi_livello_cliente_punti_valore_altissimo
+  Given un numero di punti oltre il limite integer
+  When la funzione fn:promuovi_livello_cliente viene chiamata su questo test_promuovi_livello_cliente_punti_valore_altissimo
+  Then la funzione va in errore
+
   
-  Scenario: test_calcola_totale_ordine
-    Given righe_carrello una lista con un dizionario che ha chiave "nome" e valore "mele"
-    When un cliente richiede l'esecuzione di fn:calcola_totale_ordine avente righe_carrello come primo parametro e come secondo un dizionario che rappresenta il magazzino senza mele
-    Then il valore di ritorno deve avere escluso le mele dal totale perchè non sono disponibili  in magazzino
