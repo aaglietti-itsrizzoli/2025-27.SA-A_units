@@ -13,3 +13,22 @@ Feature: ecommerce
     Given un acquisto di 3 euro
     When un cliente conclude un acquisto fn:calcola_punti_fedelta ne calcola i punti fedeltà
     Then il cliente riceve 0 punti fedeltà perchè l'acquisto è inferiore a 10 euro
+
+  Scenario: applicazione_di_uno_sconto_valido_su_un_prezzo_positivo
+     Given un prezzo iniziale di 100.0
+     And una percentuale di sconto del 20
+     When calcolo il prezzo scontato
+     Then il risultato deve essere 80.0
+
+  Scenario: errore_se_il_prezzo_negativo
+    Given un prezzo iniziale di -10.0
+    And una percentuale di sconto del 20
+    When calcolo il prezzo scontato
+    Then deve essere sollevata un'eccezione ValueError
+
+  Scenario: errore_se_lo_sconto_è_fuori_range
+    Given un prezzo iniziale di 50.0
+    And una percentuale di sconto del 110
+    When calcolo il prezzo scontato
+    Then deve essere sollevata un'eccezione ValueError
+  
