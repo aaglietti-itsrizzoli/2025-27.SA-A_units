@@ -1,5 +1,7 @@
 package com.mycompany.app;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
@@ -9,11 +11,23 @@ import org.junit.jupiter.api.Test;
  */
 public class AppTest {
 
+    @Test 
+    public void testApp(){
+        App app = new App();
+        assertNotNull(app);  
+    }
+
+    @Test 
+    public void TestMain(){
+        App.main(new String[]{});
+
+    }
     /**
      * Rigorous Test :-)
      */
     @Test
-    public void shouldAnswerWithTrue() {
-        assertTrue(true);
+    public void secondoMetodo() {
+        String stringa = App.secondoMetodo();
+        assertEquals("Ciao secondo metodo", stringa);
     }
 }
