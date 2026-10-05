@@ -1,19 +1,19 @@
 package com.mycompany.app;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-/**
- * Unit test for simple App.
- */
 public class AppTest {
-
-    /**
-     * Rigorous Test :-)
-     */
+    
     @Test
-    public void shouldAnswerWithTrue() {
-        assertTrue(true);
+    public void testAppConstructor() {
+        App app = new App();
+        assertNotNull(app);
+    }
+
+    @Test
+    public void testMain() {
+        String[] args = {};
+        App.main(args);
     }
 }
