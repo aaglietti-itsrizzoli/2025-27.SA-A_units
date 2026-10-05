@@ -5,7 +5,6 @@
 # When descrive quali fn: del modulo da testare
 # Then contiene la descrizione delle asserzioni da svolgere
 
-
 Feature: ecommerce
 
   # 0 Punti fedeltà
@@ -14,8 +13,164 @@ Feature: ecommerce
     When un cliente conclude un acquisto fn:calcola_punti_fedelta ne calcola i punti fedeltà
     Then il cliente riceve 0 punti fedeltà perchè l'acquisto è inferiore a 10 euro
 
-  
-  Scenario: test_calcola_totale_ordine
-    Given righe_carrello una lista con un dizionario che ha chiave "nome" e valore "mele"
-    When un cliente richiede l'esecuzione di fn:calcola_totale_ordine avente righe_carrello come primo parametro e come secondo un dizionario che rappresenta il magazzino senza mele
-    Then il valore di ritorno deve avere escluso le mele dal totale perchè non sono disponibili  in magazzino
+  # Prezzo scontato senza sconto
+  Scenario: test_calcola_prezzo_scontato_senza_sconto
+    Given un prezzo di 100 euro e uno sconto del 0 percento
+    When fn:calcola_prezzo_scontato calcola il prezzo scontato
+    Then il prezzo finale è 100 euro
+
+  # Prezzo scontato con sconto
+  Scenario: test_calcola_prezzo_scontato_con_sconto
+    Given un prezzo di 100 euro e uno sconto del 20 percento
+    When fn:calcola_prezzo_scontato calcola il prezzo scontato
+    Then il prezzo finale è 80 euro
+
+  # Prezzo scontato con sconto totale
+  Scenario: test_calcola_prezzo_scontato_sconto_totale
+    Given un prezzo di 100 euro e uno sconto del 100 percento
+    When fn:calcola_prezzo_scontato calcola il prezzo scontato
+    Then il prezzo finale è 0 euro
+
+  # Prezzo negativo
+  Scenario: test_calcola_prezzo_scontato_prezzo_negativo
+    Given un prezzo di -10 euro e uno sconto del 20 percento
+    When fn:calcola_prezzo_scontato calcola il prezzo scontato
+    Then viene sollevata una ValueError
+
+  # IVA con aliquota default
+  Scenario: test_calcola_iva_con_aliquota_default
+    Given un prezzo netto di 100 euro
+    When fn:calcola_iva calcola il prezzo lordo
+    Then il prezzo lordo è 122 euro
+
+  # IVA con aliquota personalizzata
+  Scenario: test_calcola_iva_con_aliquota_personalizzata
+    Given un prezzo netto di 100 euro e un'aliquota del 10 percento
+    When fn:calcola_iva calcola il prezzo lordo
+    Then il prezzo lordo è 110 euro
+
+  # IVA con prezzo negativo
+  Scenario: test_calcola_iva_prezzo_negativo
+    Given un prezzo netto di -10 euro
+    When fn:calcola_iva calcola il prezzo lordo
+    Then viene sollevata una ValueError
+
+  # Creazione di una riga del carrello
+  Scenario: test_crea_riga_carrello
+    Given un prodotto "Mouse" con prezzo di 20 euro e quantità 2
+    When fn:crea_riga_carrello crea una riga del carrello
+    Then la riga contiene il nome "Mouse", il prezzo 20, la quantità 2 e il subtotale 40
+
+  # Creazione riga con quantità non valida
+  Scenario: test_crea_riga_carrello_quantita_non_valida
+    Given un prodotto "Mouse" con prezzo di 20 euro e quantità 0
+    When fn:crea_riga_carrello crea una riga del carrello
+    Then viene sollevata una ValueError
+
+  # Totale carrello vuoto
+  Scenario: test_calcola_totale_carrello_vuoto
+    Given un carrello vuoto
+    When fn:calcola_totale_carrello calcola il totale
+    Then il totale è 0 euro
+
+  # Totale carrello con prodotti
+  Scenario: test_calcola_totale_carrello_con_prodotti
+    Given un carrello con due righe aventi subtotale di 20 e 30 euro
+    When fn:calcola_totale_carrello calcola il totale
+    Then il totale è 50 euro
+
+  # Costo della spedizione
+  Scenario: test_calcola_costo_spedizione
+    Given una spedizione di 10 kg per una distanza di 100 km
+    When fn:calcola_costo_spedizione calcola il costo
+    Then il costo della spedizione è 10 euro
+
+  # Costo della spedizione espressa
+  Scenario: test_calcola_costo_spedizione_espressa
+    Given una spedizione di 10 kg per una distanza di 100 km espressa
+    When fn:calcola_costo_spedizione calcola il costo
+    Then il costo della spedizione è 20 euro
+
+  # Costo della spedizione con peso negativo
+  Scenario: test_calcola_costo_spedizione_peso_negativo
+    Given una spedizione di -1 kg per una distanza di 100 km
+    When fn:calcola_costo_spedizione calcola il costo
+    Then viene sollevata una ValueError
+
+  # Punti fedeltà con 10 euro
+  Scenario: test_calcola_punti_fedelta_dieci_euro
+    Given un acquisto di 10 euro
+    When fn:calcola_punti_fedelta calcola i punti fedeltà
+    Then il cliente riceve 1 punto fedeltà
+
+  # Punti fedeltà con moltiplicatore
+  Scenario: test_calcola_punti_fedelta_con_moltiplicatore
+    Given un acquisto di 20 euro e un moltiplicatore pari a 2
+    When fn:calcola_punti_fedelta calcola i punti fedeltà
+    Then il cliente riceve 4 punti fedeltà
+
+  # Punti fedeltà con totale negativo
+  Scenario: test_calcola_punti_fedelta_totale_negativo
+    Given un acquisto di -10 euro
+    When fn:calcola_punti_fedelta calcola i punti fedeltà
+    Then viene sollevata una ValueError
+
+  # Livello cliente bronze
+  Scenario: test_promuovi_livello_cliente_bronze
+    Given un cliente con 50 punti
+    When fn:promuovi_livello_cliente determina il livello
+    Then il livello del cliente è "bronze"
+
+  # Livello cliente silver
+  Scenario: test_promuovi_livello_cliente_silver
+    Given un cliente con 100 punti
+    When fn:promuovi_livello_cliente determina il livello
+    Then il livello del cliente è "silver"
+
+  # Livello cliente gold
+  Scenario: test_promuovi_livello_cliente_gold
+    Given un cliente con 500 punti
+    When fn:promuovi_livello_cliente determina il livello
+    Then il livello del cliente è "gold"
+
+  # Livello cliente con punti negativi
+  Scenario: test_promuovi_livello_cliente_punti_negativi
+    Given un cliente con -1 punti
+    When fn:promuovi_livello_cliente determina il livello
+    Then viene sollevata una ValueError
+
+  # Applicazione di un codice sconto valido
+  Scenario: test_applica_codice_sconto_valido
+    Given un prezzo di 100 euro e un codice "SCONTO20" associato a uno sconto del 20 percento
+    When fn:applica_codice_sconto applica il codice "SCONTO20"
+    Then il prezzo finale è 80 euro
+
+  # Applicazione di un codice sconto inesistente
+  Scenario: test_applica_codice_sconto_inesistente
+    Given un prezzo di 100 euro e una tabella codici senza il codice "SCONTO20"
+    When fn:applica_codice_sconto applica il codice "SCONTO20"
+    Then il prezzo finale è 100 euro
+
+  # Rimozione dei prodotti esauriti
+  Scenario: test_svuota_articoli_esauriti
+    Given un carrello con un "Mouse" e una "Tastiera" e un magazzino con il Mouse disponibile e la Tastiera esaurita
+    When fn:svuota_articoli_esauriti rimuove gli articoli esauriti
+    Then il carrello contiene solo il "Mouse"
+
+  # Data di consegna durante la settimana
+  Scenario: test_stima_data_consegna_giorno_lavorativo
+    Given un ordine effettuato lunedì 1 gennaio 2024 con 2 giorni lavorativi di consegna
+    When fn:stima_data_consegna calcola la data di consegna
+    Then la data di consegna è mercoledì 3 gennaio 2024
+
+  # Data di consegna saltando il weekend
+  Scenario: test_stima_data_consegna_salta_weekend
+    Given un ordine effettuato venerdì 5 gennaio 2024 con 1 giorno lavorativo di consegna
+    When fn:stima_data_consegna calcola la data di consegna
+    Then la data di consegna è lunedì 8 gennaio 2024
+
+  # Riepilogo del cliente
+  Scenario: test_riepilogo_cliente
+    Given un cliente che ha speso 1000 euro
+    When fn:riepilogo_cliente calcola il riepilogo del cliente
+    Then il riepilogo contiene totale_speso 1000, punti 100 e livello "silver"
