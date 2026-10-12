@@ -9,4 +9,4 @@ jobs:
       - run: echo '00 Prof - 🐧🐧🐧🐧🐧🐧'
       # Below everyone should position at the right index in the roster
       - run: echo '22 Musat - 🐧🐧🐧🐧🐧🐧'
-      - run: echo '27 Roman - 🐧🐧🐧🐧🐧🐧''
+      - run: echo '27 Roman - 🐧🐧🐧🐧🐧🐧'
