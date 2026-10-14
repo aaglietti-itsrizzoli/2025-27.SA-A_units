@@ -12,7 +12,7 @@ jobs:
         uses: actions/checkout@v4
       - run: tree
       - run: curl https://qlty.sh | sh
-      - run: ~/.qlty/bin/qlty init --no --skip-plugins
+      - run: ~/.qlty/bin/qlty init --no 
       - run: ~/.qlty/bin/qlty smells --all 
       - run: ~/.qlty/bin/qlty metrics --all --quiet
       - run: ~/.qlty/bin/qlty check --all -v
