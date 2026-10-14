@@ -16,3 +16,5 @@ jobs:
       - run: echo '16 Ginisi - 🐧🐧🐧🐧🐧🐧'
       - run: echo '21 Ortuso - 🐧🐧🐧🐧🐧🐧'
       - run: echo '22 Musat - 🐧🐧🐧🐧🐧🐧'
+      - run: echo '24 pupeza - 🐧🐧🐧🐧🐧🐧'
+
