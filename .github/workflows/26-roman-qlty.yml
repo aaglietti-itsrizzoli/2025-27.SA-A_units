@@ -6,7 +6,7 @@ jobs:
   qlty:
     runs-on: ubuntu-latest
     steps:
-      - run: echo '26 roman - 🥷 🥷 🥷 🥷 🥷'
+      - run: echo '26 Roman - 🥷 🥷 🥷 🥷 🥷'
       - run: tree
       - name: Check out repository code
         uses: actions/checkout@v4
