@@ -15,4 +15,4 @@ jobs:
       - run: ~/.qlty/bin/qlty init --no --skip-plugins
       - run: ~/.qlty/bin/qlty smells --all
       - run: ~/.qlty/bin/qlty metrics --all --quiet
-      - run: ~/.qlty/bin/qlty check --all
+      - run: ~/.qlty/bin/qlty check --all --v
