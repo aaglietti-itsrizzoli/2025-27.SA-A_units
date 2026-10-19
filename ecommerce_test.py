@@ -1,4 +1,5 @@
 import pytest
+
 from ecommerce import (
     calcola_punti_fedelta,
     calcola_prezzo_scontato,
